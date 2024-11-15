@@ -1,0 +1,335 @@
+---
+openapi: 3.1.0
+info:
+  title: Referral System API
+  description: Простой RESTful API сервис для реферальной системы.
+  version: 0.1.0
+paths:
+  "/api/v1/users/create":
+    post:
+      tags:
+      - Регистрация и аутентификация пользователя
+      summary: Регистрация пользователя
+      operationId: register_user_api_v1_users_create_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateUserSchema"
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UserInfoSchema"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/api/v1/users/token":
+    post:
+      tags:
+      - Регистрация и аутентификация пользователя
+      summary: Получение токена для пользователя
+      operationId: login_for_user_access_token_api_v1_users_token_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateTokenSchema"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ResponseTokenSchema"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/api/v1/users/new_referral_code":
+    post:
+      tags:
+      - Создать или удалить реферальный код
+      summary: Создать новый реферальный код
+      description: Создаёт новый реферальный код для пользователя, если активный код
+        отсутствует.
+      operationId: change_referral_code_api_v1_users_new_referral_code_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateReferralCodeSchema"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ReferralCodeSchema"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+      security:
+      - OAuth2PasswordBearer: []
+  "/api/v1/users/deactivate_referral_code":
+    post:
+      tags:
+      - Создать или удалить реферальный код
+      summary: Деактивировать активный реферальный код
+      description: Деактивирует активный реферальный код пользователя, если такой
+        код существует.
+      operationId: deactivate_referral_code_api_v1_users_deactivate_referral_code_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/DeactivationResponseSchema"
+      security:
+      - OAuth2PasswordBearer: []
+  "/api/v1/users/search_referral_code":
+    post:
+      tags:
+      - Получение реферального кода по email
+      summary: Получение реферального кода по email адресу реферера
+      operationId: get_referral_code_by_email_api_v1_users_search_referral_code_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SearchCodeResponseSchema"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - "$ref": "#/components/schemas/ReferralCodeSchema"
+                - type: 'null'
+                title: Response Get Referral Code By Email Api V1 Users Search Referral
+                  Code Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/api/v1/users/search_referred/{referrer_id}":
+    post:
+      tags:
+      - Получение информации о рефералах по id
+      summary: Получает всех пользователей, которых пригласил пользователь с данным
+        referrer_id.
+      operationId: get_referred_users_api_v1_users_search_referred__referrer_id__post
+      parameters:
+      - name: referrer_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          description: ID реферера
+          title: Referrer Id
+        description: ID реферера
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/UserInfoSchema"
+                title: Response Get Referred Users Api V1 Users Search Referred  Referrer
+                  Id  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+components:
+  schemas:
+    CreateReferralCodeSchema:
+      properties:
+        days:
+          type: integer
+          minimum: 1
+          title: Days
+          description: Срок годности реферального кода
+      type: object
+      required:
+      - days
+      title: CreateReferralCodeSchema
+      description: Pydantic-схема для создания реферального кода.
+    CreateTokenSchema:
+      properties:
+        email:
+          type: string
+          title: Email
+          description: Электронная почта
+        password:
+          type: string
+          title: Password
+          description: Пароль пользователя
+      type: object
+      required:
+      - email
+      - password
+      title: CreateTokenSchema
+      description: Pydantic-схема для создания токена.
+    CreateUserSchema:
+      properties:
+        email:
+          type: string
+          title: Email
+          description: Электронная почта
+        referral_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Referral Code
+          description: Код реферала
+        password:
+          type: string
+          title: Password
+          description: Пароль пользователя
+      type: object
+      required:
+      - email
+      - password
+      title: CreateUserSchema
+      description: Pydantic-схема для регистрации пользователя.
+    DeactivationResponseSchema:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: The referral code has been successfully deactivated.
+      type: object
+      title: DeactivationResponseSchema
+      description: Pydantic-схема для вывода статуса о деактивации реферального кода.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            "$ref": "#/components/schemas/ValidationError"
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ReferralCodeSchema:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: Реферальный код
+        expiration_date:
+          type: string
+          format: date-time
+          title: Expiration Date
+          description: Дата истечения срока действия кода
+        is_archived:
+          type: boolean
+          title: Is Archived
+          description: Проверка, архивирован ли код
+          default: false
+      type: object
+      required:
+      - code
+      - expiration_date
+      title: ReferralCodeSchema
+      description: Pydantic-схема для показа реферального кода.
+    ResponseTokenSchema:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+          description: Токен
+        token_type:
+          type: string
+          title: Token Type
+          description: Тип токена
+      type: object
+      required:
+      - access_token
+      - token_type
+      title: ResponseTokenSchema
+      description: Pydantic-схема для показа токена.
+    SearchCodeResponseSchema:
+      properties:
+        email:
+          type: string
+          title: Email
+          description: Электронная почта
+      type: object
+      required:
+      - email
+      title: SearchCodeResponseSchema
+      description: Pydantic-схема для поиска реферального кода по email.
+    UserInfoSchema:
+      properties:
+        id:
+          type: integer
+          title: Id
+          description: ID пользователя в БД
+        email:
+          type: string
+          title: Email
+          description: Электронная почта
+        referral_code:
+          items:
+            "$ref": "#/components/schemas/ReferralCodeSchema"
+          type: array
+          title: Referral Code
+          description: Информация о реферальном коде
+      type: object
+      required:
+      - id
+      - email
+      - referral_code
+      title: UserInfoSchema
+      description: Pydantic-схема для вывода информации о пользователе.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: token
