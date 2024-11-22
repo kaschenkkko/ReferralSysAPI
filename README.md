@@ -8,7 +8,7 @@
 </div>
 
 # Документация API
-RefSystem - [API redoc](https://kaschenkkko.github.io/RefSystemAPI/)
+RefSystem - [API redoc](https://kaschenkkko.github.io/ReferralSysAPI/)
 
 # Техническое задание проекта:
 
